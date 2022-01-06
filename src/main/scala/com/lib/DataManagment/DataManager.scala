@@ -3,6 +3,8 @@ package com.lib.DataManagment
 import com.lib.Exceptions._
 import com.lib.Model.{Author, Unit, User}
 
+import scala.math.Ordering.Implicits.seqOrdering
+
 
 case class DataManager(private var users: Seq[User], private var units: Seq[Unit], private var authors: Seq[Author]) {
 
@@ -140,10 +142,10 @@ case class DataManager(private var users: Seq[User], private var units: Seq[Unit
 
   def getAvailableUnits: Seq[Unit] = units.filter(_.amount != 0)
 
-  def getUnitsByTitle(title: String): Seq[Unit] = units.filter(_.title.matches("(?i).*" + title + ".*"))
+  def getUnitsByTitle(title: String): Seq[Unit] = units.filter(_.title.matches("(?i).*" + title + ".*")).sorted(Ordering.by[Unit, Seq[String]](_.authors))
 
-  def getUnitsByYear(year: Int): Seq[Unit] = units.filter(_.year == year)
+  def getUnitsByYear(year: Int): Seq[Unit] = units.filter(_.year == year).sorted(Ordering.by[Unit, String](_.title.toLowerCase()))
 
-  def getUnitsByAuthorName(authorName: String): Seq[Unit] = units.filter(_.authors.contains(authorName))
+  def getUnitsByAuthorName(authorName: String): Seq[Unit] = units.filter(_.authors.exists(_.matches("(?i).*" + authorName + ".*"))).sorted(Ordering.by[Unit, Int](_.year))
 
 }

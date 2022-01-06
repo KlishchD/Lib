@@ -301,8 +301,8 @@ class DataManagerTest extends FunSuite with BeforeAndAfter with PrivateMethodTes
     assert(dataManager.getUnitsByTitle("Physics").isEmpty)
   }
   test("getUnitsByTitle_MatchesSomeUnits_ReturnsMatchedUnitsSequence") {
-    val units = Seq(Unit(0, "Geek Heresy", 2015, Seq("B"), 100, "Book"),
-      Unit(1, "Geek", 2016, Seq("A"), 0, "Book"),
+    val units = Seq(Unit(0, "Geek Heresy", 2015, Seq("A"), 100, "Book"),
+      Unit(1, "Geek", 2016, Seq("B"), 0, "Book"),
       Unit(1, "GE", 2017, Seq("C"), 12, "Book"),
       Unit(1, "GM", 2018, Seq("Kentaro Toyama"), 0, "Book"),
       Unit(1, "GK", 2019, Seq("Kentaro Toyama"), 0, "Book"),
@@ -312,10 +312,10 @@ class DataManagerTest extends FunSuite with BeforeAndAfter with PrivateMethodTes
 
     val dataManager = DataManager(users, units, authors)
 
-    val expected = Seq(Unit(1, "Geek", 2016, Seq("A"), 0, "Book"),
-      Unit(0, "Geek Heresy", 2015, Seq("B"), 100, "Book"),
+    val expected =Seq(Unit(0, "Geek Heresy", 2015, Seq("A"), 100, "Book"),
+      Unit(1, "Geek", 2016, Seq("B"), 0, "Book"),
       Unit(1, "GE", 2017, Seq("C"), 12, "Book"))
-    assert(dataManager.getUnitsByTitle("Ge").zip(expected).exists(x => x._1 != x._2))
+    assert(!dataManager.getUnitsByTitle("Ge").zip(expected).exists(x => x._1 != x._2))
   }
 
   test("getUnitsByYear_MatchesNothing_ReturnsEmptySequence") {
@@ -332,7 +332,7 @@ class DataManagerTest extends FunSuite with BeforeAndAfter with PrivateMethodTes
 
     assert(dataManager.getUnitsByYear(2022).isEmpty)
   }
-  test("getUnitsByTitle_MatchesSomeUnits_ReturnsMatchedUnitsSequence") {
+  test("getUnitsByYear_MatchesSomeUnits_ReturnsMatchedUnitsSequence") {
     val units = Seq(Unit(0, "Geek Heresy", 2015, Seq("Kentaro Toyama"), 100, "Book"),
       Unit(1, "Geek", 2016, Seq("Kentaro Toyama"), 0, "Book"),
       Unit(1, "GE", 2017, Seq("Kentaro Toyama"), 12, "Book"),
@@ -345,42 +345,41 @@ class DataManagerTest extends FunSuite with BeforeAndAfter with PrivateMethodTes
     val dataManager = DataManager(users, units, authors)
 
     val expected = Seq(Unit(1, "Geek", 2016, Seq("Kentaro Toyama"), 0, "Book"),
-      Unit(1, "Geek", 2016, Seq("Kentaro Toyama"), 0, "Book"),
-      Unit(1, "GE", 2017, Seq("Kentaro Toyama"), 12, "Book"))
-    assert(dataManager.getUnitsByTitle("Ge") == expected)
+      Unit(1, "GK", 2016, Seq("Kentaro Toyama"), 0, "Book"))
+    assert(!dataManager.getUnitsByYear(2016).zip(expected).exists(x => x._1 != x._2))
   }
-/*
-  test("getUnitsByTitle_MatchesNothing_ReturnsEmptySequence") {
+
+  test("getUnitsByAuthorName_MatchesNothing_ReturnsEmptySequence") {
     val units = Seq(Unit(0, "Geek Heresy", 2015, Seq("Kentaro Toyama"), 100, "Book"),
-      Unit(1, "Geek", 2016, Seq("Kentaro Toyama"), 0, "Book"),
-      Unit(1, "GE", 2017, Seq("Kentaro Toyama"), 12, "Book"),
-      Unit(1, "GM", 2018, Seq("Kentaro Toyama"), 0, "Book"),
-      Unit(1, "GK", 2019, Seq("Kentaro Toyama"), 0, "Book"),
-      Unit(1, "GP", 2020, Seq("Kentaro Toyama"), 121, "Book"))
+      Unit(1, "Geek", 2016, Seq("Bridget Sheppard"), 0, "Book"),
+      Unit(1, "GE", 2017, Seq("Miguel Rivers"), 12, "Book"),
+      Unit(1, "GM", 2018, Seq("Jayson Dennis"), 0, "Book"),
+      Unit(1, "GK", 2019, Seq("Stacie Weston"), 0, "Book"),
+      Unit(1, "GP", 2020, Seq("Stacie Weston"), 121, "Book"))
     val users = Seq(User("user0", "ddd1", 10, Seq(), blackList = false, "librarian"))
     val authors = Seq(Author("Kentaro Toyama", Seq(0)))
 
     val dataManager = DataManager(users, units, authors)
 
-    assert(dataManager.getUnitsByTitle("Physics").isEmpty)
+    assert(dataManager.getUnitsByAuthorName("NONAME").isEmpty)
   }
-  test("getUnitsByTitle_MatchesSomeUnits_ReturnsMatchedUnitsSequence") {
+  test("getUnitsByAuthorName_MatchesSomeUnits_ReturnsMatchedUnitsSequence") {
     val units = Seq(Unit(0, "Geek Heresy", 2015, Seq("Kentaro Toyama"), 100, "Book"),
-      Unit(1, "Geek", 2016, Seq("Kentaro Toyama"), 0, "Book"),
-      Unit(1, "GE", 2017, Seq("Kentaro Toyama"), 12, "Book"),
-      Unit(1, "GM", 2018, Seq("Kentaro Toyama"), 0, "Book"),
-      Unit(1, "GK", 2019, Seq("Kentaro Toyama"), 0, "Book"),
-      Unit(1, "GP", 2020, Seq("Kentaro Toyama"), 121, "Book"))
+      Unit(1, "Geek", 2016, Seq("Bridget Sheppard"), 0, "Book"),
+      Unit(1, "GE", 2017, Seq("Miguel Rivers"), 12, "Book"),
+      Unit(1, "GM", 2018, Seq("Jayson Dennis"), 0, "Book"),
+      Unit(1, "GK", 2019, Seq("Stacie Weston"), 0, "Book"),
+      Unit(1, "GP", 2020, Seq("Stacie Weston"), 121, "Book"))
     val users = Seq(User("user0", "ddd1", 10, Seq(), blackList = false, "librarian"))
     val authors = Seq(Author("Kentaro Toyama", Seq(0)))
 
     val dataManager = DataManager(users, units, authors)
 
-    val expected = Seq(Unit(0, "Geek Heresy", 2015, Seq("Kentaro Toyama"), 100, "Book"),
-      Unit(1, "Geek", 2016, Seq("Kentaro Toyama"), 0, "Book"),
-      Unit(1, "GE", 2017, Seq("Kentaro Toyama"), 12, "Book"))
-    assert(dataManager.getUnitsByTitle("Ge") == expected)
-  }*/
+    val expected = Seq(Unit(1, "GK", 2019, Seq("Stacie Weston"), 0, "Book"),
+      Unit(1, "GP", 2020, Seq("Stacie Weston"), 121, "Book"))
+
+    assert(!dataManager.getUnitsByAuthorName("wes").zip(expected).exists(x => x._1 != x._2))
+  }
 
 
 
