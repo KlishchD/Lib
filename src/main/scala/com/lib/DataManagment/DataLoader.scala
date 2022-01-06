@@ -21,7 +21,8 @@ object DataLoader {
     source.close()
     users
   }
-  private def parseUnits(line: String): Seq[Int] = line.split("\\|").map(_.trim.toInt)
+  private def parseUnits(line: String): Seq[Int] = if (line.trim == "") Seq()
+  else line.split("\\|").map(_.trim.toInt)
 
   private def loadUnits(filePath: String): Seq[Unit] = {
     val source = Source.fromFile(filePath)

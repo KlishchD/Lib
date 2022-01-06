@@ -80,16 +80,25 @@ case class DataManager(private var users: Seq[User], private var units: Seq[Unit
     userOption.get.maxUnitsNumber
   }
 
-  def addUser(user: User): scala.Unit = users = users :+ user
-
-  def removeUser(user: User): scala.Unit = {
-    if (!users.contains(user)) throw new NoSuchUserException
-    users = users.filter(_ != user)
+  def addUser(user: User): scala.Unit = {
+    if (users.map(_.username).contains(user.username)) throw new UserAlreadyExistsException
+    users = users :+ user
   }
 
-  def addUnit(unit: Unit): scala.Unit = units = units :+ unit
+  def removeUser(username: String): scala.Unit = {
+    if (!users.exists(_.username == username)) throw new NoSuchUserException
+    users = users.filter(_.username != username)
+  }
 
-  def removeUnit(unit: Unit): scala.Unit = units = units.filter(_ != unit)
+  def addUnit(unit: Unit): scala.Unit = {
+    if (units.map(_.id).contains(unit.id)) throw new UnitAlreadyExistsException
+    units = units :+ unit
+  }
+
+  def removeUnit(unitId: Int): scala.Unit = {
+    if (!units.exists(_.id == unitId)) throw new NoSuchUnitException
+    units = units.filter(_.id != unitId)
+  }
 
   def addUserInBlackList(username: String): scala.Unit = {
     val userOption = users.find(_.username == username)

@@ -1,5 +1,5 @@
 import com.lib.DataManagment.DataManager
-import com.lib.Exceptions.{AttemptToTakeSecondCopyException, IllegalMaxUnitsNumberValueException, NoSuchUnitException, NoSuchUserException, OutOfUnitCopiesException, UserIsAlreadyInBlackListException, UserIsNotInBlackListException}
+import com.lib.Exceptions._
 import com.lib.Model.{Author, Unit, User}
 import org.scalatest.{BeforeAndAfter, FunSuite, PrivateMethodTester}
 
@@ -27,6 +27,33 @@ class DataManagerTest extends FunSuite with BeforeAndAfter with PrivateMethodTes
     val dataManager = DataManager(Seq(User("user0", "ddd1", 10, Seq(0), blackList = false, "librarian")),
       Seq(unit), Seq(Author("Kentaro Toyama", Seq(0))))
     assert(dataManager.getUnit(0).get == unit)
+  }
+
+  test("addUser_UserExists_UserAlreadyExistsException") {
+    val user = User("user0", "ddd1", 10, Seq(0), blackList = false, "librarian")
+    val dataManager = DataManager(Seq(user),
+      Seq(Unit(0, "Geek Heresy", 2015, Seq("Kentaro Toyama"), 3, "Book")), Seq(Author("Kentaro Toyama", Seq(0))))
+    assertThrows[UserAlreadyExistsException](dataManager.addUser(user))
+  }
+  test("addUser_UserDoesntExists_AddsUser") {
+    val dataManager = DataManager(Seq(User("user0", "ddd1", 10, Seq(0), blackList = false, "librarian")),
+      Seq(Unit(0, "Geek Heresy", 2015, Seq("Kentaro Toyama"), 3, "Book")),
+      Seq(Author("Kentaro Toyama", Seq(0))))
+    dataManager.addUser(User("user1", "ddd1", 10, Seq(0), blackList = false, "librarian"))
+    assert(dataManager.getUser("user1").nonEmpty)
+  }
+
+  test("addUnit_UnitExists_UnitAlreadyExistsException") {
+    val unit = Unit(0, "Geek Heresy", 2015, Seq("Kentaro Toyama"), 3, "Book")
+    val dataManager = DataManager(Seq(User("user0", "ddd1", 10, Seq(0), blackList = false, "librarian")),
+      Seq(unit), Seq(Author("Kentaro Toyama", Seq(0))))
+    assertThrows[UnitAlreadyExistsException](dataManager.addUnit(unit))
+  }
+  test("addUnit_UnitDoesntExists_AddsUnit") {
+    val dataManager = DataManager(Seq(User("user0", "ddd1", 10, Seq(0), blackList = false, "librarian")),
+      Seq(Unit(0, "Geek Heresy", 2015, Seq("Kentaro Toyama"), 3, "Book")), Seq(Author("Kentaro Toyama", Seq(0))))
+    dataManager.addUnit(Unit(1, "Geek Heresy", 2015, Seq("Kentaro Toyama"), 3, "Book"))
+    assert(dataManager.getUnit(1).nonEmpty)
   }
 
   test("takeUnit_wrongTitle_NoSuchUnitException") {
@@ -126,7 +153,7 @@ class DataManagerTest extends FunSuite with BeforeAndAfter with PrivateMethodTes
   test("getUserMaxUnitsNumber_WrongUsername_NoSuchUserException") {
     val dataManager = DataManager(Seq(User("user0", "ddd1", 10, Seq(0, 1), blackList = false, "librarian")),
       Seq(Unit(0, "Geek Heresy", 2015, Seq("Kentaro Toyama"), 1, "Book"), Unit(1, "Geek", 2015, Seq("Kentaro Toyama"), 1, "Book")), Seq(Author("Kentaro Toyama", Seq(0))))
-    assertThrows[NoSuchUserException] (dataManager.getUserMaxUnitsNumber("aflndgfakjf"))
+    assertThrows[NoSuchUserException](dataManager.getUserMaxUnitsNumber("aflndgfakjf"))
   }
   test("getUserMaxUnitsNumber_CorrectUsername_ReturnsUserMaxUnitNumber") {
     val dataManager = DataManager(Seq(User("user0", "ddd1", 10, Seq(0, 1), blackList = false, "librarian")),
@@ -134,17 +161,32 @@ class DataManagerTest extends FunSuite with BeforeAndAfter with PrivateMethodTes
     assert(dataManager.getUserMaxUnitsNumber("user0") == 10)
   }
 
-  test("removeUser_WrongUser_NoSuchUserException") {
+  test("removeUser_WrongUsername_NoSuchUserException") {
     val dataManager = DataManager(Seq(User("user0", "ddd1", 10, Seq(0, 1), blackList = false, "librarian")),
       Seq(Unit(0, "Geek Heresy", 2015, Seq("Kentaro Toyama"), 1, "Book"), Unit(1, "Geek", 2015, Seq("Kentaro Toyama"), 1, "Book")), Seq(Author("Kentaro Toyama", Seq(0))))
-    assertThrows[NoSuchUserException](dataManager.removeUser(User("name", "pass", 1, Seq(), blackList = false, "user")))
+    assertThrows[NoSuchUserException](dataManager.removeUser("name"))
   }
-  test("removeUser_CorrectUser_RemovesUser") {
-    val user = User("user0", "ddd1", 10, Seq(0, 1), blackList = false, "librarian")
-    val dataManager = DataManager(Seq(user), Seq(Unit(0, "Geek Heresy", 2015, Seq("Kentaro Toyama"), 1, "Book"), Unit(1, "Geek", 2015, Seq("Kentaro Toyama"), 1, "Book")), Seq(Author("Kentaro Toyama", Seq(0))))
-    dataManager.removeUser(dataManager.getUsers.head)
-    assert(!dataManager.getUsers.contains(user))
+  test("removeUser_CorrectUsername_RemovesUser") {
+    val dataManager = DataManager(Seq(User("user0", "ddd1", 10, Seq(0, 1), blackList = false, "librarian")),
+      Seq(Unit(0, "Geek Heresy", 2015, Seq("Kentaro Toyama"), 1, "Book"), Unit(1, "Geek", 2015, Seq("Kentaro Toyama"), 1, "Book")),
+      Seq(Author("Kentaro Toyama", Seq(0))))
+    dataManager.removeUser("user0")
+    assert(dataManager.getUser("user0").isEmpty)
   }
+
+  test("removeUnit_WrongUnitId_NoSuchUnitException") {
+    val dataManager = DataManager(Seq(User("user0", "ddd1", 10, Seq(0, 1), blackList = false, "librarian")),
+      Seq(Unit(0, "Geek Heresy", 2015, Seq("Kentaro Toyama"), 1, "Book"), Unit(1, "Geek", 2015, Seq("Kentaro Toyama"), 1, "Book")), Seq(Author("Kentaro Toyama", Seq(0))))
+    assertThrows[NoSuchUnitException](dataManager.removeUnit(213))
+  }
+  test("removeUnit_CorrectUnitId_RemovesUnit") {
+    val dataManager = DataManager(Seq(User("user0", "ddd1", 10, Seq(0, 1), blackList = false, "librarian")),
+      Seq(Unit(0, "Geek Heresy", 2015, Seq("Kentaro Toyama"), 1, "Book"), Unit(1, "Geek", 2015, Seq("Kentaro Toyama"), 1, "Book")),
+      Seq(Author("Kentaro Toyama", Seq(0))))
+    dataManager.removeUnit(0)
+    assert(dataManager.getUnit(0).isEmpty)
+  }
+
 
   test("addUserInBlackList_WrongUsername_NoSuchUserException") {
     val dataManager = DataManager(Seq(User("user0", "ddd1", 10, Seq(0, 1), blackList = false, "librarian")),
@@ -312,7 +354,7 @@ class DataManagerTest extends FunSuite with BeforeAndAfter with PrivateMethodTes
 
     val dataManager = DataManager(users, units, authors)
 
-    val expected =Seq(Unit(0, "Geek Heresy", 2015, Seq("A"), 100, "Book"),
+    val expected = Seq(Unit(0, "Geek Heresy", 2015, Seq("A"), 100, "Book"),
       Unit(1, "Geek", 2016, Seq("B"), 0, "Book"),
       Unit(1, "GE", 2017, Seq("C"), 12, "Book"))
     assert(!dataManager.getUnitsByTitle("Ge").zip(expected).exists(x => x._1 != x._2))
@@ -380,7 +422,6 @@ class DataManagerTest extends FunSuite with BeforeAndAfter with PrivateMethodTes
 
     assert(!dataManager.getUnitsByAuthorName("wes").zip(expected).exists(x => x._1 != x._2))
   }
-
 
 
 }
