@@ -1,0 +1,3 @@
+package com.lib.DataManagment
+
+class IllegalMaxUnitsNumberValueException extends Exception
