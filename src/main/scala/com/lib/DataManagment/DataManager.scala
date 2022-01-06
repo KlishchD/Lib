@@ -1,7 +1,8 @@
 package com.lib.DataManagment
 
-import com.lib.Exceptions.{AttemptToExceedUnitLimitException, AttemptToTakeSecondCopyException, NoSuchUnitException, NoSuchUserException, OutOfUnitCopiesException}
+import com.lib.Exceptions._
 import com.lib.Model.{Author, Unit, User}
+
 
 case class DataManager(private var users: Seq[User], private var units: Seq[Unit], private var authors: Seq[Author]) {
 
@@ -11,7 +12,11 @@ case class DataManager(private var users: Seq[User], private var units: Seq[Unit
 
   def getAuthors: Seq[Author] = authors
 
+  def getBlackList: Seq[User] = users.filter(_.blackList)
+
   def getUser(username: String): Option[User] = users.find(_.username == username)
+
+  def getUnit(unitId: Int): Option[Unit] = units.find(_.id == unitId)
 
   def takeUnit(username: String, title: String): scala.Unit = {
     val userOption = users.find(_.username == username)
@@ -35,7 +40,7 @@ case class DataManager(private var users: Seq[User], private var units: Seq[Unit
       if (x == user) x.copy(unitsId = x.unitsId :+ unit.id) else x
     }
   }
-//
+
   def returnUnit(username: String, unitsId: Seq[Int]): scala.Unit = {
     if (!users.exists(_.username == username)) throw new NoSuchUserException
 
@@ -45,11 +50,11 @@ case class DataManager(private var users: Seq[User], private var units: Seq[Unit
     }
   }
 
-  def logIn(username: String, password: String): Option[User] = users.find(user => user.username == username && user.password == password)
-
   private def removeUserUnits(username: String, unitsId: Seq[Int]): scala.Unit = users = users.map { x =>
     if (x.username == username) x.copy(unitsId = x.unitsId.filter(!unitsId.contains(_))) else x
   }
+
+  def logIn(username: String, password: String): Option[User] = users.find(user => user.username == username && user.password == password)
 
   def getUserUnits(username: String): Seq[Unit] = {
     if (!users.exists(_.username == username)) throw new NoSuchUserException
@@ -73,47 +78,72 @@ case class DataManager(private var users: Seq[User], private var units: Seq[Unit
     userOption.get.maxUnitsNumber
   }
 
-
   def addUser(user: User): scala.Unit = users = users :+ user
 
-  def removeUser(user: User): scala.Unit = users = users.filter(_ != user)
-
-  def getBlackList: Seq[User] = users.filter(_.blackList)
-
-  def addUserInBlackList(username: String): scala.Unit = users = users.map { x =>
-    if (x.username == username) x.copy(blackList = true) else x
+  def removeUser(user: User): scala.Unit = {
+    if (!users.contains(user)) throw new NoSuchUserException
+    users = users.filter(_ != user)
   }
-
-  def removeUserFromBlackList(username: String): scala.Unit = users = users.map { x =>
-    if (x.username == username) x.copy(blackList = false) else x
-  }
-
-  def isUserInBlackList(username: String): Boolean = users.filter(x => x.username == username).head.blackList
-
-  def addUsersUnits(units: Seq[Int], username: String): scala.Unit = users = users.map { x =>
-    if (x.username == username) x.copy(unitsId = x.unitsId ++ units) else x
-  }
-
-  def getUnitsByTitle(title: String): Seq[Unit] = units.filter(_.title.matches(".*" + title + ".*"))
-
-  def getUnitsByYear(year: Int): Seq[Unit] = units.filter(_.year == year)
-
-  def getUnitsByAuthorName(authorName: String): Seq[Unit] = units.filter(_.authors.contains(authorName))
 
   def addUnit(unit: Unit): scala.Unit = units = units :+ unit
 
-  def addCopies(unitId: Int, number: Int): scala.Unit = units = units.map { x =>
-    if (x.id == unitId) x.copy(amount = x.amount + number) else x
-  }
-
-  def removeCopies(unitId: Int, number: Int): scala.Unit = units = units.map { x =>
-    if (x.id == unitId) x.copy(amount = x.amount - number) else x
-  }
-
   def removeUnit(unit: Unit): scala.Unit = units = units.filter(_ != unit)
+
+  def addUserInBlackList(username: String): scala.Unit = {
+    val userOption = users.find(_.username == username)
+    if (userOption.isEmpty) throw new NoSuchUserException
+    if (userOption.get.blackList) throw new UserIsAlreadyInBlackListException
+    users = users.map { x =>
+      if (x.username == username) x.copy(blackList = true) else x
+    }
+  }
+
+  def removeUserFromBlackList(username: String): scala.Unit = users = users.map { x =>
+    val userOption = users.find(_.username == username)
+    if (userOption.isEmpty) throw new NoSuchUserException
+    if (!userOption.get.blackList) throw new UserIsNotInBlackListException
+    if (x.username == username) x.copy(blackList = false) else x
+  }
+
+  def isUserInBlackList(username: String): Boolean = {
+    if (!users.exists(_.username == username)) throw new NoSuchUserException
+    users.filter(x => x.username == username).head.blackList
+  }
+
+  def addUnitsToUser(username: String, unitsId: Seq[Int]): scala.Unit = {
+    if (!users.exists(_.username == username)) throw new NoSuchUserException
+    if (!unitsId.forall(units.map(_.id).contains(_))) throw new NoSuchUnitException
+    users = users.map { x =>
+      if (x.username == username) x.copy(unitsId = x.unitsId ++ unitsId) else x
+    }
+  }
+
+  def addCopies(unitId: Int, number: Int): scala.Unit = {
+    if (!units.map(_.id).contains(unitId)) throw new NoSuchUnitException
+    if (number <= 0) throw new IllegalArgumentException
+
+    units = units.map { x =>
+      if (x.id == unitId) x.copy(amount = x.amount + number) else x
+    }
+  }
+
+  def removeCopies(unitId: Int, number: Int): scala.Unit = units = {
+    if (!units.map(_.id).contains(unitId)) throw new NoSuchUnitException
+    if (number <= 0) throw new IllegalArgumentException
+
+    units.map { x =>
+      if (x.id == unitId) x.copy(amount = x.amount - number) else x
+    }
+  }
 
   def getDeficitUnits: Seq[Unit] = units.filter(_.amount == 0)
 
   def getAvailableUnits: Seq[Unit] = units.filter(_.amount != 0)
+
+  def getUnitsByTitle(title: String): Seq[Unit] = units.filter(_.title.matches("(?i).*" + title + ".*"))
+
+  def getUnitsByYear(year: Int): Seq[Unit] = units.filter(_.year == year)
+
+  def getUnitsByAuthorName(authorName: String): Seq[Unit] = units.filter(_.authors.contains(authorName))
 
 }
