@@ -1,0 +1,5 @@
+user0, ddd1, 10, , false, librarian
+user1, ddd2, 20, 1 | 4, true, user
+user2, ddd3, 10, 3 | 4, false, librarian
+user3, ddd4, 10, 2, false, user
+user4, ddd5, 25, 4, true, user
